@@ -12,9 +12,10 @@
   "type": "commonjs",
   "dependencies": {
     "api-dylux": "^1.8.6",
-    "axios": "^1.15.2",
+    "axios": "^1.16.0",
     "baileys": "github:WhiskeySockets/Baileys",
     "human-readable": "^0.2.1",
+    "node-fecth": "^0.0.1-security",
     "node-fetch": "^2.7.0",
     "performance-now": "^2.1.0",
     "pino": "^10.3.1",
