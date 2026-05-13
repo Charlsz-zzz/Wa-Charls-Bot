@@ -3,3 +3,8 @@ auth_info/
 .env
 .npm
 .DS_Store
+node_modules
+auth_info
+session
+.env
+*.json
