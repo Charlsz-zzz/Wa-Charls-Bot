@@ -1,10 +1,9 @@
+
 node_modules/
+.env
+.env.*
 auth_info/
-.env
-.npm
-.DS_Store
-node_modules
-auth_info
 session
-.env
-*.json
+.DS_Store
+Thumbs.db
+.npm
