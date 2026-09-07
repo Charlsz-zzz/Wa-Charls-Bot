@@ -4,9 +4,9 @@ const pino = require('pino');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
+
 const { smsg } = require('./lib/simple.js');
 
-const __dirname = path.resolve();
 const pluginsDir = path.join(__dirname, 'plugins');
 
 if (!fs.existsSync(pluginsDir)) {
@@ -17,16 +17,15 @@ const plugins = new Map();
 
 function loadPlugins() {
     plugins.clear();
-    if (!fs.existsSync(pluginsDir)) return;
-
     const files = fs.readdirSync(pluginsDir).filter(file => file.endsWith('.js'));
-
     for (let file of files) {
         try {
             delete require.cache[require.resolve(path.join(pluginsDir, file))];
             const plugin = require(path.join(pluginsDir, file));
-            const name = file.replace('.js', '');
-            plugins.set(name, plugin);
+            const fn = plugin.default || plugin;
+            if(typeof fn!== 'function') throw new Error('El plugin no exporta una función');
+            const name = file.replace('.js', '').toLowerCase();
+            plugins.set(name, fn);
             console.log(chalk.green(`>>> Plugin cargado: ${name}`));
         } catch (err) {
             console.log(chalk.red(`>>> Error cargando ${file}: ${err.message}`));
@@ -45,6 +44,8 @@ async function startBot() {
 
     loadPlugins();
 
+    fs.watch(pluginsDir, () => loadPlugins());
+
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
@@ -53,11 +54,13 @@ async function startBot() {
             qrcode.generate(qr, { small: true });
         }
         if (connection === 'close') {
-            const code = lastDisconnect.error?.output?.statusCode;
+            const code = lastDisconnect?.error?.output?.statusCode;
             console.log(chalk.red('Se cerró. Código:'), code);
             if (code!== DisconnectReason.loggedOut) {
                 console.log(chalk.cyan('Reconectando en 3s...'));
                 setTimeout(() => startBot(), 3000);
+            } else {
+                console.log(chalk.red('Sesión cerrada. Borra auth_info y escanea de nuevo.'));
             }
         }
         if (connection === 'open') {
@@ -78,22 +81,16 @@ async function startBot() {
         const args = texto.slice(1).trim().split(/ +/);
         const comando = args.shift().toLowerCase();
 
-        console.log(chalk.cyan(`[CMD] ${msg.sender.split('@')[0]}: ${comando}`));
+        console.log(chalk.cyan(`[CMD] ${msg.sender.split('@')[0]}:.${comando}`));
 
-        // execut xd
         if (plugins.has(comando)) {
             try {
-                await plugins.get(comando)(sock, msg, args.join(' '));
+                await plugins.get(comando)(sock, msg, args.join(' '), { plugins });
             } catch (err) {
                 console.error(chalk.red(`Error en plugin ${comando}:`), err);
-                await sock.sendMessage(msg.chat, {
-                    text: `❌ Error ejecutando *.${comando}*: ${err.message}`
-                });
+                await sock.sendMessage(msg.chat, { text: `❌ Error en *.${comando}*: ${err.message}` });
             }
-            return;
         }
-
-        // ola
     });
 }
 
