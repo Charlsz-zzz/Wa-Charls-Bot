@@ -80,7 +80,7 @@ async function startBot() {
 
         console.log(chalk.cyan(`[CMD] ${msg.sender.split('@')[0]}: ${comando}`));
 
-        // --- EJECUTAR PLUGINS DINÁMICOS ---
+        // execut xd
         if (plugins.has(comando)) {
             try {
                 await plugins.get(comando)(sock, msg, args.join(' '));
@@ -93,7 +93,7 @@ async function startBot() {
             return;
         }
 
-        // Si el comando no existe, no hace nada
+        // ola
     });
 }
 
